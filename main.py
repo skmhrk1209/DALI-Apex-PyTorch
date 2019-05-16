@@ -106,7 +106,9 @@ def main():
         # NOTE: Is that len(dataset) ?
         train_data_loader = pytorch.DALIClassificationIterator(
             pipelines=train_pipeline,
-            size=list(train_pipeline.epoch_size().values())[0] / world_size
+            size=list(train_pipeline.epoch_size().values())[0] // world_size,
+            auto_reset=True,
+            stop_at_epoch=True
         )
 
         val_pipeline = ValPipeline(
@@ -122,7 +124,9 @@ def main():
 
         val_data_loader = pytorch.DALIClassificationIterator(
             pipelines=val_pipeline,
-            size=list(val_pipeline.epoch_size().values())[0] / world_size
+            size=list(val_pipeline.epoch_size().values())[0] // world_size,
+            auto_reset=True,
+            stop_at_epoch=True
         )
 
         summary_writer = SummaryWriter(config.event_directory)
