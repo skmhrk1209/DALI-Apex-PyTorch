@@ -41,8 +41,6 @@ def main():
     with open(args.config) as file:
         config = Dict(json.load(file))
 
-    assert args.local_rank == distributed.get_rank() % torch.cuda.device_count()
-
     distributed.init_process_group(backend='nccl')
     world_size = distributed.get_world_size()
     rank = distributed.get_rank()
@@ -51,10 +49,12 @@ def main():
     torch.cuda.set_device(gpu)
     print(f'Enabled distributed training. (rank {rank}/{world_size})')
 
+    assert args.local_rank == distributed.get_rank() % torch.cuda.device_count()
+
     torch.manual_seed(0)
     model = models.resnet50().cuda()
     model = fp16_utils.network_to_half(model)
-    model = parallell.DistributedDataParallel(model, delay_allreduce=True)
+    model = parallel.DistributedDataParallel(model, delay_allreduce=True)
 
     criterion = nn.CrossEntropyLoss(reduction='mean').cuda()
 
