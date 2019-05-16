@@ -49,8 +49,6 @@ def main():
     torch.cuda.set_device(gpu)
     print(f'Enabled distributed training. (rank {rank}/{world_size})')
 
-    assert args.local_rank == distributed.get_rank() % torch.cuda.device_count()
-
     torch.manual_seed(0)
     model = models.resnet50().cuda()
     model = fp16_utils.network_to_half(model)
