@@ -51,7 +51,9 @@ def main():
     print(f'Enabled distributed training. (global_rank: {global_rank}/{world_size}, local_rank: {local_rank}/{device_count})')
 
     torch.manual_seed(0)
-    model = models.resnet50().cuda()
+    model = models.resnet50()
+    model.fc = nn.Linear(in_features=2048, out_features=10, bias=True)
+    model = model.cuda()
 
     optimizer = torch.optim.SGD(
         params=model.parameters(),
