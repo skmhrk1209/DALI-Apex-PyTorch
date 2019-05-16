@@ -1,5 +1,5 @@
 {
-    "opt_level": "O0",
+    "opt_level": "O2",
     "num_workers": 4,
     "num_epochs": 90,
     "batch_size": 128,
