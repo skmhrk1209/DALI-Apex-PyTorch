@@ -133,7 +133,7 @@ def main():
                 images, labels = data[0].values()
                 images = images.cuda()
                 labels = labels.cuda()
-                labels = labels.long()
+                labels = labels.squeeze().long()
 
                 logits = model(images)
                 loss = criterion(logits, labels)
@@ -171,6 +171,7 @@ def main():
                     images, labels = data[0].values()
                     images = images.cuda()
                     labels = labels.cuda()
+                    labels = labels.squeeze().long()
 
                     logits = model(images)
                     loss = criterion(logits, labels) / world_size
