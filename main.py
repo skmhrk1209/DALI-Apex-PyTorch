@@ -130,7 +130,9 @@ def main():
 
             for step, data in enumerate(train_data_loader):
 
-                images, labels = data[0].values()
+                images = data[0]["data"]
+                labels = data[0]["label"]
+
                 images = images.cuda()
                 labels = labels.cuda()
                 labels = labels.squeeze().long()
@@ -166,9 +168,11 @@ def main():
 
             with torch.no_grad():
 
-                for images, labels in val_data_loader:
+                for step, data in enumerate(val_data_loader):
 
-                    images, labels = data[0].values()
+                    images = data[0]["data"]
+                    labels = data[0]["label"]
+
                     images = images.cuda()
                     labels = labels.cuda()
                     labels = labels.squeeze().long()
