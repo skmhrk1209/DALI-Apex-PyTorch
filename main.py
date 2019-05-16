@@ -133,6 +133,7 @@ def main():
                 images, labels = data[0].values()
                 images = images.cuda()
                 labels = labels.cuda()
+                labels = labels.long()
 
                 logits = model(images)
                 loss = criterion(logits, labels)
