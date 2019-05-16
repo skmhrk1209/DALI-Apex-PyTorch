@@ -389,6 +389,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
             torch.cuda.nvtx.range_pop()
         loss = criterion(output, target)
 
+        if global_rank == 0:
+
+            print("loss: ", loss)
+
         # compute gradient and do SGD step
         optimizer.zero_grad()
 
