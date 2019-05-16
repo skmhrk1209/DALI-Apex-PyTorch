@@ -109,10 +109,11 @@ if args.deterministic:
 
 
 def main():
-    with open(args.config) as file:
-        config = Dict(json.load(file))
 
     global best_prec1, args
+
+    with open(args.config) as file:
+        config = Dict(json.load(file))
 
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:
