@@ -10,6 +10,7 @@ from torchvision import transforms
 from torchvision import models
 from tensorboardX import SummaryWriter
 from nvidia import dali
+from nvidia.dali.plugin.pytorch import DALIClassificationIterator
 from apex import amp
 from apex import parallel
 from pipelines import TrainPipeline
@@ -93,7 +94,7 @@ def main():
         )
         train_pipeline.build()
 
-        train_data_loader = dali.plugin.pytorch.DALIClassificationIterator(train_pipeline)
+        train_data_loader = DALIClassificationIterator(train_pipeline)
 
         val_pipeline = ValPipeline(
             root=config.val_root,
@@ -106,7 +107,7 @@ def main():
         )
         val_pipeline.build()
 
-        val_data_loader = dali.plugin.pytorch.DALIClassificationIterator(val_pipeline)
+        val_data_loader = DALIClassificationIterator(val_pipeline)
 
         summary_writer = SummaryWriter(config.event_directory)
 
