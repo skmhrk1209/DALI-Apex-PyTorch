@@ -20,6 +20,7 @@ from pipelines import *
 import numpy as np
 from nvidia import dali
 from nvidia.dali.plugin import pytorch
+from apex.fp16_utils import *
 
 try:
     from apex.parallel import DistributedDataParallel as DDP
