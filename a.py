@@ -121,7 +121,7 @@ def main():
     with open("config.json") as file:
         config = Dict(json.load(file))
 
-    args.distributed = False
+    args.distributed = True
     '''
     if 'WORLD_SIZE' in os.environ:
         args.distributed = int(os.environ['WORLD_SIZE']) > 1
