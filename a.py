@@ -111,10 +111,12 @@ if args.deterministic:
     torch.manual_seed(args.local_rank)
     torch.set_printoptions(precision=10)
 
+
 class Dict(dict):
     def __getattr__(self, name): return self[name]
     def __setattr__(self, name, value): self[name] = value
     def __delattr__(self, name): del self[name]
+
 
 def main():
 
@@ -364,10 +366,13 @@ def train(train_loader, model, criterion, optimizer, epoch):
     prefetcher = data_prefetcher(train_loader)
     input, target = prefetcher.next()
     i = 0
-    while input is not None:
+    for i, data in enumerate(train_loader):
         i += 1
 
         adjust_learning_rate(optimizer, epoch, i, len(train_loader))
+
+        input = data[0]["data"].cuda()
+        target = data[0]["label"].squeeze().long().cuda()
 
         if args.prof:
             if i > 10:
