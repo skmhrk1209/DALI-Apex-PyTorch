@@ -55,6 +55,9 @@ def main():
     model.fc = nn.Linear(in_features=2048, out_features=10, bias=True)
     model = model.cuda()
 
+    config.global_batch_size = config.local_batch_size * world_size
+    config.lr = config.base_lr * config.global_batch_size / 256
+
     optimizer = torch.optim.SGD(
         params=model.parameters(),
         lr=config.lr,
@@ -90,11 +93,11 @@ def main():
         # NOTE: Should random seed be the same in the same node?
         train_pipeline = TrainPipeline(
             root=config.train_root,
-            batch_size=config.batch_size,
+            batch_size=config.local_batch_size,
             num_threads=config.num_workers,
             device_id=local_rank,
-            num_shards=device_count,
-            shard_id=local_rank,
+            num_shards=world_size,
+            shard_id=global_rank,
             image_size=224
         )
         train_pipeline.build()
@@ -108,11 +111,11 @@ def main():
 
         val_pipeline = ValPipeline(
             root=config.val_root,
-            batch_size=config.batch_size,
+            batch_size=config.local_batch_size,
             num_threads=config.num_workers,
             device_id=local_rank,
-            num_shards=device_count,
-            shard_id=local_rank,
+            num_shards=world_size,
+            shard_id=global_rank,
             image_size=224
         )
         val_pipeline.build()

@@ -2,8 +2,8 @@
     "opt_level": "O2",
     "num_workers": 4,
     "num_epochs": 90,
-    "batch_size": 128,
-    "lr": 0.05,
+    "local_batch_size": 128,
+    "base_lr": 0.1,
     "lr_milestones": [
         30,
         60,
