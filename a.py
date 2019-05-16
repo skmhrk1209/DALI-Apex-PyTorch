@@ -408,45 +408,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
         if args.prof:
             torch.cuda.nvtx.range_pop()
 
-        if i % args.print_freq == 0:
-            # Every print_freq iterations, check the loss, accuracy, and speed.
-            # For best performance, it doesn't make sense to print these metrics every
-            # iteration, since they incur an allreduce and some host<->device syncs.
-
-            # Measure accuracy
-            prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-
-            # Average loss and accuracy across processes for logging
-            if args.distributed:
-                reduced_loss = reduce_tensor(loss.data)
-                prec1 = reduce_tensor(prec1)
-                prec5 = reduce_tensor(prec5)
-            else:
-                reduced_loss = loss.data
-
-            # to_python_float incurs a host<->device sync
-            losses.update(to_python_float(reduced_loss), input.size(0))
-            top1.update(to_python_float(prec1), input.size(0))
-            top5.update(to_python_float(prec5), input.size(0))
-
-            torch.cuda.synchronize()
-            batch_time.update((time.time() - end)/args.print_freq)
-            end = time.time()
-
-            if args.local_rank == 0:
-                print('Epoch: [{0}][{1}/{2}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Speed {3:.3f} ({4:.3f})\t'
-                      'Loss {loss.val:.10f} ({loss.avg:.4f})\t'
-                      'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                      'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                          epoch, i, len(train_loader),
-                          args.world_size*args.batch_size/batch_time.val,
-                          args.world_size*args.batch_size/batch_time.avg,
-                          batch_time=batch_time,
-                          loss=losses, top1=top1, top5=top5))
-
-
 
 def validate(val_loader, model, criterion):
     batch_time = AverageMeter()
