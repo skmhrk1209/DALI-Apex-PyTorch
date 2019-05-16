@@ -187,7 +187,7 @@ def main():
                     distributed.all_reduce(loss)
 
                     predictions = logits.topk(1)[1].squeeze()
-                    accuracy = torch.mean(predictions == labels) / world_size
+                    accuracy = torch.mean((predictions == labels).float()) / world_size
                     distributed.all_reduce(accuracy)
 
                     total_steps += 1
