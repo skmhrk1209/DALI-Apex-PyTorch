@@ -37,7 +37,7 @@ class TrainPipeline(dali.pipeline.Pipeline):
         self.coin = dali.ops.CoinFlip()
 
     def define_graph(self):
-        images, labels = self.file_reader()
+        images, labels = self.reader()
         images = self.decoder(images)
         images = self.resize(images)
         images = self.normalize(images, mirror=self.coin())
@@ -74,7 +74,7 @@ class ValPipeline(dali.pipeline.Pipeline):
         )
 
     def define_graph(self):
-        images, labels = self.file_reader()
+        images, labels = self.reader()
         images = self.decoder(images)
         images = self.resize(images)
         images = self.normalize(images)
