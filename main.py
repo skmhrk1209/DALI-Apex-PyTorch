@@ -201,8 +201,7 @@ def main():
 
                 summary_writer.add_scalars(
                     main_tag='validation',
-                    tag_scalar_dict=dict(loss=loss, accuracy=accuracy),
-                    global_step=len(train_data_loader) * epoch + step
+                    tag_scalar_dict=dict(loss=loss, accuracy=accuracy)
                 )
 
                 print(f'[validation] epoch: {epoch} loss: {loss} accuracy: {accuracy}')
