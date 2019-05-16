@@ -175,6 +175,12 @@ def main():
                                       loss_scale=args.loss_scale
                                       )
 
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer=optimizer,
+        milestones=config.lr_milestones,
+        gamma=config.lr_gamma
+    )
+
     # For distributed training, wrap the model with apex.parallel.DistributedDataParallel.
     # This must be done AFTER the call to amp.initialize.  If model = DDP(model) is called
     # before model, ... = amp.initialize(model, ...), the call to amp.initialize may alter
@@ -367,8 +373,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     i = 0
     for i, data in enumerate(train_loader):
         i += 1
-
-        adjust_learning_rate(optimizer, epoch, i, len(train_loader))
 
         input = data[0]["data"].cuda()
         target = data[0]["label"].squeeze().long().cuda()
