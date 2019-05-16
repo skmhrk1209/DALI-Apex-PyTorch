@@ -10,7 +10,7 @@ from torchvision import transforms
 from torchvision import models
 from tensorboardX import SummaryWriter
 from nvidia import dali
-from apex import parallell
+from apex import parallel
 from apex import fp16_utils
 from pipelines import TrainPipeline
 from pipelines import ValPipeline
