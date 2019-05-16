@@ -163,8 +163,9 @@ def main():
 
             model.eval()
 
+            total_steps = 0
             total_loss = 0
-            total_correct = 0
+            total_accurtacy = 0
 
             with torch.no_grad():
 
@@ -182,13 +183,15 @@ def main():
                     distributed.all_reduce(loss)
 
                     predictions = logits.topk(1)[1].squeeze()
-                    correct = torch.sum(predictions == labels)
+                    accuracy = torch.mean(predictions == labels) / world_size
+                    distributed.all_reduce(accuracy)
 
+                    total_steps += 1
                     total_loss += loss
-                    total_correct += correct
+                    total_accurtacy += accuracy
 
-                loss = total_loss / len(val_data_loader)
-                accuracy = total_correct / len(val_data_loader)
+                loss = total_loss / total_steps
+                accuracy = total_accurtacy / total_steps
 
             if global_rank == 0:
 
