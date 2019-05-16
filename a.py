@@ -363,8 +363,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     model.train()
     end = time.time()
 
-    prefetcher = data_prefetcher(train_loader)
-    input, target = prefetcher.next()
     i = 0
     for i, data in enumerate(train_loader):
         i += 1
@@ -443,7 +441,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
                           batch_time=batch_time,
                           loss=losses, top1=top1, top5=top5))
 
-        input, target = prefetcher.next()
 
 
 def validate(val_loader, model, criterion):
