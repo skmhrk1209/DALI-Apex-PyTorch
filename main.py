@@ -130,8 +130,7 @@ def main():
 
             for step, data in enumerate(train_data_loader):
 
-                print(data)
-                images, labels = data
+                images, labels = data[0].values()
                 images = images.cuda()
                 labels = labels.cuda()
 
@@ -168,10 +167,11 @@ def main():
 
                 for images, labels in val_data_loader:
 
+                    images, labels = data[0].values()
                     images = images.cuda()
                     labels = labels.cuda()
-                    logits = model(images)
 
+                    logits = model(images)
                     loss = criterion(logits, labels) / world_size
                     distributed.all_reduce(loss)
 

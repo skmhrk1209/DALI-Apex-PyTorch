@@ -41,7 +41,7 @@ class TrainPipeline(dali.pipeline.Pipeline):
         images = self.decoder(images)
         images = self.resize(images)
         images = self.normalize(images, mirror=self.coin())
-        return (images, labels)
+        return images, labels
 
 
 class ValPipeline(dali.pipeline.Pipeline):
@@ -78,4 +78,4 @@ class ValPipeline(dali.pipeline.Pipeline):
         images = self.decoder(images)
         images = self.resize(images)
         images = self.normalize(images)
-        return (images, labels)
+        return images, labels
