@@ -128,7 +128,11 @@ def main():
 
             scheduler.step()
 
-            for step, (images, labels) in enumerate(train_data_loader):
+            for step, x in enumerate(train_data_loader):
+
+                print(type(x), x)
+                images = 0
+                labels = 0
 
                 images = images.cuda()
                 labels = labels.cuda()
