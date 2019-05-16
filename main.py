@@ -45,8 +45,8 @@ def main():
     distributed.init_process_group(backend='nccl')
     world_size = distributed.get_world_size()
     global_rank = distributed.get_rank()
-    local_rank = args.local_rank
     device_count = torch.cuda.device_count()
+    local_rank = args.local_rank
     torch.cuda.set_device(local_rank)
     print(f'Enabled distributed training. (global_rank: {global_rank}/{world_size}, local_rank: {local_rank}/{device_count})')
 
