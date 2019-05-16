@@ -122,8 +122,10 @@ def main():
         config = Dict(json.load(file))
 
     args.distributed = False
+    '''
     if 'WORLD_SIZE' in os.environ:
-        #args.distributed = int(os.environ['WORLD_SIZE']) > 1
+        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+    '''
 
     args.gpu = 0
     args.world_size = 1
