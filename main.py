@@ -134,9 +134,8 @@ def main():
         for epoch in range(last_epoch + 1, config.num_epochs):
 
             model.train()
-
             scheduler.step()
-            '''
+
             for step, data in enumerate(train_data_loader):
 
                 images = data[0]["data"]
@@ -168,7 +167,7 @@ def main():
                 optimizer_state_dict=optimizer.state_dict(),
                 last_epoch=epoch
             ), f'{config.checkpoint_directory}/epoch_{epoch}')
-            '''
+
             model.eval()
 
             total_steps = 0
