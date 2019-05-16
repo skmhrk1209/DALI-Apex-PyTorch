@@ -194,8 +194,7 @@ def main():
                     total_loss += loss
                     total_accurtacy += accuracy
 
-                    print(total_steps)
-
+                print(total_steps)
                 loss = total_loss / total_steps
                 accuracy = total_accurtacy / total_steps
 
