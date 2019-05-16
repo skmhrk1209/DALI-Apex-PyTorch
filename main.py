@@ -24,7 +24,7 @@ parser.add_argument('--checkpoint', type=str, default='')
 parser.add_argument('--training', action='store_true')
 parser.add_argument('--evaluation', action='store_true')
 parser.add_argument('--inference', action='store_true')
-parser.add_argument("--local_rank", default=0, type=int)
+parser.add_argument("--local_rank", type=int)
 args = parser.parse_args()
 
 backends.cudnn.benchmark = True
@@ -65,7 +65,7 @@ def main():
         weight_decay=config.weight_decay
     )
     optimizer = fp16_utils.FP16_Optimizer(
-        optimizer=optimizer,
+        init_optimizer=optimizer,
         static_loss_scale=config.static_loss_scale,
         dynamic_loss_scale=config.dynamic_loss_scale
     )
