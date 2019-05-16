@@ -130,6 +130,7 @@ def main():
 
             for step, data in enumerate(train_data_loader):
 
+                print(data)
                 images, labels = data
                 images = images.cuda()
                 labels = labels.cuda()
