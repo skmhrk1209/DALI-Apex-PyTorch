@@ -25,7 +25,7 @@ parser.add_argument('--training', action='store_true')
 parser.add_argument('--evaluation', action='store_true')
 parser.add_argument('--inference', action='store_true')
 parser.add_argument("--local_rank", type=int)
-args = parser.parse_args()
+args, unkown = parser.parse_known_args()
 
 backends.cudnn.benchmark = True
 
