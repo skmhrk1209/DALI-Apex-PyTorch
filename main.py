@@ -84,6 +84,8 @@ def main():
         last_epoch=last_epoch
     )
 
+    summary_writer = SummaryWriter(config.event_directory)
+
     if args.training:
 
         os.makedirs(config.checkpoint_directory, exist_ok=True)
@@ -128,8 +130,6 @@ def main():
             auto_reset=True,
             stop_at_epoch=True
         )
-
-        summary_writer = SummaryWriter(config.event_directory)
 
         for epoch in range(last_epoch + 1, config.num_epochs):
 
@@ -197,7 +197,6 @@ def main():
                     total_loss += loss
                     total_accurtacy += accuracy
 
-                print(total_steps)
                 loss = total_loss / total_steps
                 accuracy = total_accurtacy / total_steps
 
@@ -209,6 +208,69 @@ def main():
                 )
 
                 print(f'[validation] epoch: {epoch} loss: {loss} accuracy: {accuracy}')
+
+    if args.evaluation:
+
+        test_pipeline = ValPipeline(
+            root=config.val_root,
+            batch_size=config.local_batch_size,
+            num_threads=config.num_workers,
+            device_id=local_rank,
+            num_shards=world_size,
+            shard_id=global_rank,
+            image_size=224
+        )
+        test_pipeline.build()
+
+        test_data_loader = pytorch.DALIClassificationIterator(
+            pipelines=test_pipeline,
+            size=list(test_pipeline.epoch_size().values())[0] // world_size,
+            auto_reset=True,
+            stop_at_epoch=True
+        )
+
+        model.eval()
+
+        total_steps = 0
+        total_loss = 0
+        total_accurtacy = 0
+
+        with torch.no_grad():
+
+            for step, data in enumerate(val_data_loader):
+
+                images = data[0]["data"]
+                labels = data[0]["label"]
+
+                images = images.cuda()
+                labels = labels.cuda()
+                labels = labels.squeeze().long()
+
+                logits = model(images)
+                loss = criterion(logits, labels) / world_size
+                distributed.all_reduce(loss)
+
+                predictions = logits.topk(1)[1].squeeze()
+                accuracy = torch.mean((predictions == labels).float()) / world_size
+                distributed.all_reduce(accuracy)
+
+                total_steps += 1
+                total_loss += loss
+                total_accurtacy += accuracy
+
+            loss = total_loss / total_steps
+            accuracy = total_accurtacy / total_steps
+
+        if global_rank == 0:
+
+            summary_writer.add_scalars(
+                main_tag='validation',
+                tag_scalar_dict=dict(loss=loss, accuracy=accuracy)
+            )
+
+            print(f'[evaluation] epoch: {last_epoch} loss: {loss} accuracy: {accuracy}')
+
+    summary_writer.close()
 
 
 if __name__ == '__main__':
