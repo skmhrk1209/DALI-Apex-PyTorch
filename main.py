@@ -10,8 +10,8 @@ from torchvision import transforms
 from torchvision import models
 from tensorboardX import SummaryWriter
 from nvidia import dali
+from apex import amp
 from apex import parallel
-from apex import fp16_utils
 from pipelines import TrainPipeline
 from pipelines import ValPipeline
 import argparse
@@ -24,7 +24,6 @@ parser.add_argument('--checkpoint', type=str, default='')
 parser.add_argument('--training', action='store_true')
 parser.add_argument('--evaluation', action='store_true')
 parser.add_argument('--inference', action='store_true')
-parser.add_argument("--local_rank", type=int)
 args, unkown = parser.parse_known_args()
 
 backends.cudnn.benchmark = True
@@ -51,10 +50,6 @@ def main():
 
     torch.manual_seed(0)
     model = models.resnet50().cuda()
-    model = fp16_utils.network_to_half(model)
-    model = parallel.DistributedDataParallel(model, delay_allreduce=True)
-
-    criterion = nn.CrossEntropyLoss(reduction='mean').cuda()
 
     optimizer = torch.optim.SGD(
         params=model.parameters(),
@@ -62,11 +57,9 @@ def main():
         momentum=config.momentum,
         weight_decay=config.weight_decay
     )
-    optimizer = fp16_utils.FP16_Optimizer(
-        init_optimizer=optimizer,
-        static_loss_scale=config.static_loss_scale,
-        dynamic_loss_scale=config.dynamic_loss_scale
-    )
+
+    model, optimizer = amp.initialize(model, optimizer, opt_level=config.opt_level)
+    model = parallel.DistributedDataParallel(model, delay_allreduce=True)
 
     last_epoch = -1
     if args.checkpoint:
@@ -74,6 +67,8 @@ def main():
         model.load_state_dict(checkpoint.model_state_dict)
         optimizer.load_state_dict(checkpoint.optimizer_state_dict)
         last_epoch = checkpoint.last_epoch
+
+    criterion = nn.CrossEntropyLoss(reduction='mean').cuda()
 
     scheduler = optim.lr_scheduler.MultiStepLR(
         optimizer=optimizer,
@@ -130,7 +125,8 @@ def main():
                 loss = criterion(logits, labels)
 
                 optimizer.zero_grad()
-                optimizer.backward(loss)
+                with amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
                 optimizer.step()
 
                 if rank == 0:
