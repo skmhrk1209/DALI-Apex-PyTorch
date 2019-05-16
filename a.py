@@ -79,31 +79,11 @@ parser.add_argument('--loss-scale', type=str, default=None)
 
 cudnn.benchmark = True
 
-
-def fast_collate(batch):
-    imgs = [img[0] for img in batch]
-    targets = torch.tensor([target[1] for target in batch], dtype=torch.int64)
-    w = imgs[0].size[0]
-    h = imgs[0].size[1]
-    tensor = torch.zeros((len(imgs), 3, h, w), dtype=torch.uint8)
-    for i, img in enumerate(imgs):
-        nump_array = np.asarray(img, dtype=np.uint8)
-        if(nump_array.ndim < 3):
-            nump_array = np.expand_dims(nump_array, axis=-1)
-        nump_array = np.rollaxis(nump_array, 2)
-
-        tensor[i] += torch.from_numpy(nump_array)
-
-    return tensor, targets
-
-
-best_prec1 = 0
 args = parser.parse_args()
 
 print("opt_level = {}".format(args.opt_level))
 print("keep_batchnorm_fp32 = {}".format(args.keep_batchnorm_fp32), type(args.keep_batchnorm_fp32))
 print("loss_scale = {}".format(args.loss_scale), type(args.loss_scale))
-
 print("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
 
 if args.deterministic:
@@ -171,8 +151,6 @@ def main():
     # for convenient interoperation with argparse.
     model, optimizer = amp.initialize(model, optimizer,
                                       opt_level=args.opt_level,
-                                      keep_batchnorm_fp32=args.keep_batchnorm_fp32,
-                                      loss_scale=args.loss_scale
                                       )
 
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
