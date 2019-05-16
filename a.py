@@ -76,21 +76,9 @@ parser.add_argument('--sync_bn', action='store_true',
 parser.add_argument('--opt-level', type=str)
 parser.add_argument('--keep-batchnorm-fp32', type=str, default=None)
 parser.add_argument('--loss-scale', type=str, default=None)
-
-cudnn.benchmark = True
-
 args = parser.parse_args()
 
-print("opt_level = {}".format(args.opt_level))
-print("keep_batchnorm_fp32 = {}".format(args.keep_batchnorm_fp32), type(args.keep_batchnorm_fp32))
-print("loss_scale = {}".format(args.loss_scale), type(args.loss_scale))
-print("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
-
-if args.deterministic:
-    cudnn.benchmark = False
-    cudnn.deterministic = True
-    torch.manual_seed(args.local_rank)
-    torch.set_printoptions(precision=10)
+cudnn.benchmark = True
 
 
 class Dict(dict):
@@ -101,44 +89,18 @@ class Dict(dict):
 
 def main():
 
-    global best_prec1, args
-
     with open("config.json") as file:
         config = Dict(json.load(file))
 
-    args.distributed = True
-    '''
-    if 'WORLD_SIZE' in os.environ:
-        args.distributed = int(os.environ['WORLD_SIZE']) > 1
-    '''
+    world_size = dist.get_world_size()
+    global_rank = dist.get_rank()
+    device_count = torch.cuda.device_count()
+    local_rank = args.local_rank
+    torch.cuda.set_device(local_rank)
+    torch.distributed.init_process_group(backend='nccl')
 
-    args.gpu = 0
-    args.world_size = 1
-
-    if args.distributed:
-        args.gpu = args.local_rank
-        torch.cuda.set_device(args.gpu)
-        torch.distributed.init_process_group(backend='nccl',
-                                             init_method='env://')
-        args.world_size = torch.distributed.get_world_size()
-
-    assert torch.backends.cudnn.enabled, "Amp requires cudnn backend to be enabled."
-
-    # create model
-    if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
-    else:
-        print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
-
+    model = models.resnet50()
     model.fc = nn.Linear(in_features=2048, out_features=10, bias=True)
-
-    if args.sync_bn:
-        import apex
-        print("using apex synced BN")
-        model = apex.parallel.convert_syncbn_model(model)
-
     model = model.cuda()
 
     # Scale learning rate based on global batch size
