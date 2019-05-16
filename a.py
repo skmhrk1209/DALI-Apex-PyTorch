@@ -293,8 +293,6 @@ def main():
         return
 
     for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
-            train_sampler.set_epoch(epoch)
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch)
