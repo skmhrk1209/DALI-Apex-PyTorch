@@ -18,6 +18,8 @@ import torchvision.models as models
 from pipelines import *
 
 import numpy as np
+from nvidia import dali
+from nvidia.dali.plugin import pytorch
 
 try:
     from apex.parallel import DistributedDataParallel as DDP
