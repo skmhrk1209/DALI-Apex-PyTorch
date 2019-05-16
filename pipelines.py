@@ -15,20 +15,20 @@ class TrainPipeline(dali.pipeline.Pipeline):
             random_shuffle=True
         )
 
-        self.decoder = dali.ops.HostDecoderRandomCrop(
-            device="cpu",
+        self.decoder = dali.ops.nvJPEGDecoderRandomCrop(
+            device="mixed",
             random_area=[0.1, 1.0],
             random_aspect_ratio=[0.8, 1.25]
         )
 
         self.resize = dali.ops.Resize(
-            device="cpu",
+            device="gpu",
             resize_x=image_size,
             resize_y=image_size
         )
 
         self.normalize = dali.ops.CropMirrorNormalize(
-            device="cpu",
+            device="gpu",
             crop=image_size,
             mean=(0.485 * 255, 0.456 * 255, 0.406 * 255),
             std=(0.229 * 255, 0.224 * 255, 0.225 * 255)
@@ -57,17 +57,17 @@ class ValPipeline(dali.pipeline.Pipeline):
             random_shuffle=False
         )
 
-        self.decoder = dali.ops.HostDecoder(
-            device="cpu"
+        self.decoder = dali.ops.nvJPEGDecoder(
+            device="mixed"
         )
 
         self.resize = dali.ops.Resize(
-            device="cpu",
+            device="gpu",
             resize_shorter=image_size
         )
 
         self.normalize = dali.ops.CropMirrorNormalize(
-            device="cpu",
+            device="gpu",
             crop=image_size,
             mean=(0.485 * 255, 0.456 * 255, 0.406 * 255),
             std=(0.229 * 255, 0.224 * 255, 0.225 * 255)

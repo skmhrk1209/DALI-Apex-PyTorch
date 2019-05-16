@@ -10,7 +10,7 @@ from torchvision import transforms
 from torchvision import models
 from tensorboardX import SummaryWriter
 from nvidia import dali
-from nvidia.dali.plugin.pytorch import DALIClassificationIterator
+from nvidia.dali.plugin import pytorch
 from apex import amp
 from apex import parallel
 from pipelines import TrainPipeline
@@ -25,7 +25,8 @@ parser.add_argument('--checkpoint', type=str, default='')
 parser.add_argument('--training', action='store_true')
 parser.add_argument('--evaluation', action='store_true')
 parser.add_argument('--inference', action='store_true')
-args, unkown = parser.parse_known_args()
+parser.add_argument("--local_rank", type=int)
+args = parser.parse_args()
 
 backends.cudnn.benchmark = True
 
@@ -43,11 +44,11 @@ def main():
 
     distributed.init_process_group(backend='nccl')
     world_size = distributed.get_world_size()
-    rank = distributed.get_rank()
-    num_gpu = torch.cuda.device_count()
-    gpu = rank % num_gpu
-    torch.cuda.set_device(gpu)
-    print(f'Enabled distributed training. (rank {rank}/{world_size})')
+    global_rank = distributed.get_rank()
+    local_rank = args.local_rank
+    device_count = torch.cuda.device_count()
+    torch.cuda.set_device(local_rank)
+    print(f'Enabled distributed training. (global_rank: {global_rank}/{world_size}, local_rank: {local_rank}/{device_count})')
 
     torch.manual_seed(0)
     model = models.resnet50().cuda()
@@ -64,7 +65,7 @@ def main():
 
     last_epoch = -1
     if args.checkpoint:
-        checkpoint = Dict(torch.load(args.checkpoint), map_location=lambda storage, location: storage.cuda(gpu))
+        checkpoint = Dict(torch.load(args.checkpoint), map_location=lambda storage, location: storage.cuda(local_rank))
         model.load_state_dict(checkpoint.model_state_dict)
         optimizer.load_state_dict(checkpoint.optimizer_state_dict)
         last_epoch = checkpoint.last_epoch
@@ -83,31 +84,41 @@ def main():
         os.makedirs(config.checkpoint_directory, exist_ok=True)
         os.makedirs(config.event_directory, exist_ok=True)
 
+        # NOTE: When partition for distributed training executed?
+        # NOTE: Should random seed be the same in the same node?
         train_pipeline = TrainPipeline(
             root=config.train_root,
             batch_size=config.batch_size,
             num_threads=config.num_workers,
-            device_id=0,
-            num_shards=num_gpu,
-            shard_id=gpu,
+            device_id=local_rank,
+            num_shards=device_count,
+            shard_id=local_rank,
             image_size=224
         )
         train_pipeline.build()
 
-        train_data_loader = DALIClassificationIterator(train_pipeline)
+        # NOTE: What's `epoch_size`?
+        # NOTE: Is that len(dataset) ?
+        train_data_loader = pytorch.DALIClassificationIterator(
+            pipelines=train_pipeline,
+            size=train_pipeline.epoch_size().values()[0] / world_size
+        )
 
         val_pipeline = ValPipeline(
             root=config.val_root,
             batch_size=config.batch_size,
             num_threads=config.num_workers,
-            device_id=0,
-            num_shards=num_gpu,
-            shard_id=gpu,
+            device_id=local_rank,
+            num_shards=device_count,
+            shard_id=local_rank,
             image_size=224
         )
         val_pipeline.build()
 
-        val_data_loader = DALIClassificationIterator(val_pipeline)
+        val_data_loader = pytorch.DALIClassificationIterator(
+            pipelines=val_pipeline,
+            size=val_pipeline.epoch_size().values()[0] / world_size
+        )
 
         summary_writer = SummaryWriter(config.event_directory)
 
@@ -130,7 +141,7 @@ def main():
                     scaled_loss.backward()
                 optimizer.step()
 
-                if rank == 0:
+                if global_rank == 0:
 
                     summary_writer.add_scalars(
                         main_tag='training',
@@ -171,7 +182,7 @@ def main():
                 loss = total_loss / len(val_data_loader)
                 accuracy = total_correct / len(val_data_loader)
 
-            if rank == 0:
+            if global_rank == 0:
 
                 summary_writer.add_scalars(
                     main_tag='validation',
