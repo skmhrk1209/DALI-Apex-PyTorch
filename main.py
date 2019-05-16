@@ -149,8 +149,7 @@ def main():
 
                     summary_writer.add_scalars(
                         main_tag='training',
-                        tag_scalar_dict=dict(loss=loss),
-                        global_step=len(train_data_loader) * epoch + step
+                        tag_scalar_dict=dict(loss=loss)
                     )
 
                     print(f'[training] epoch: {epoch} step: {step} loss: {loss}')
