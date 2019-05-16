@@ -389,7 +389,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
             torch.cuda.nvtx.range_pop()
         loss = criterion(output, target)
 
-        if global_rank == 0:
+        if dist.get_rank() == 0:
 
             print("loss: ", loss)
 
