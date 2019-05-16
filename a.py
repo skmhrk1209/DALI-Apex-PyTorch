@@ -117,7 +117,7 @@ def main():
 
     global best_prec1, args
 
-    with open(args.config) as file:
+    with open("config.json") as file:
         config = Dict(json.load(file))
 
     args.distributed = False
