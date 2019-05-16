@@ -15,6 +15,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from pipelines import *
 
 import numpy as np
 
@@ -242,7 +243,7 @@ def main():
         collate_fn=fast_collate)
     '''
 
-    world_size = distributed.get_world_size()
+    world_size = dist.get_world_size()
     global_rank = distributed.get_rank()
     device_count = torch.cuda.device_count()
     local_rank = args.local_rank
