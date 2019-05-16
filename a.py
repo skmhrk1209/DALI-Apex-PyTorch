@@ -123,7 +123,7 @@ def main():
 
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:
-        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+        #args.distributed = int(os.environ['WORLD_SIZE']) > 1
 
     args.gpu = 0
     args.world_size = 1
@@ -244,7 +244,7 @@ def main():
     '''
 
     world_size = dist.get_world_size()
-    global_rank = distributed.get_rank()
+    global_rank = dist.get_rank()
     device_count = torch.cuda.device_count()
     local_rank = args.local_rank
 
